@@ -14,4 +14,7 @@ with open("training.csv", "r") as file:
     file.close()
 
 for guo, countries in results.items():
-    print(guo, countries)
+    k = list(countries.keys())
+    v = list(countries.values())
+    country = k[v.index(max(v))]
+    print(guo, country)
