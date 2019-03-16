@@ -1,6 +1,6 @@
 import csv
 
-open_file = "training.csv"
+open_file = "data4.csv"
 write_file = "result_datafactor.csv"
 
 
