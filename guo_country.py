@@ -2,7 +2,7 @@ import csv
 
 csv.register_dialect("excel", delimiter=";")
 print("Getting and sorting data...")
-with open("training.csv", "r") as file:
+with open("data-guo.csv", "r") as file:
     contents = csv.DictReader(file, dialect="excel")
     rowno = 0
     results = {}

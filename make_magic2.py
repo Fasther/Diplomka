@@ -8,6 +8,8 @@ def set_temp_guo_data():
     guo_temp_data[data["Country ISO code"]]["Empl"] += int(data["Result - EMPl"])
     guo_temp_data[data["Country ISO code"]]["Assets"] += int(data["Result - assets"])
     guo_temp_data[data["Country ISO code"]]["PL_before"] += int(data["Result P/L"])
+    guo_temp_data[data["Country ISO code"]]["E_faktor"] = int(data["E Faktor"])
+
 
 
 def get_results():
@@ -15,36 +17,52 @@ def get_results():
     total_temp_empl = 0
     total_temp_assets = 0
     total_temp_pl = 0
+    total_temp_e_factor: = 0
 
-    check_sum_after = 0
+    check_sum_after_cctb = 0
+    check_sum_after_data = 0
 
     for country in guo_temp_data:
         total_temp_revenue += guo_temp_data[country]["Revenue"]
         total_temp_empl += guo_temp_data[country]["Empl"]
         total_temp_assets += guo_temp_data[country]["Assets"]
         total_temp_pl += guo_temp_data[country]["PL_before"]
+        total_temp_e_factor += guo_temp_data[country]["E_factor"]
+
+
+    # calculate CCTB
 
     for country in guo_temp_data:
-        # total_temp_empl = total_temp_empl if total_temp_empl > 0 else 1
-        # total_temp_assets = total_temp_assets if total_temp_assets > 0 else 1
-        # total_temp_revenue = total_temp_revenue if abs(total_temp_revenue) >0 else 1
-
         guo_temp_data[country]["PL_after"] = (
                 ((1 / 3) * ((guo_temp_data[country]["Revenue"] / total_temp_revenue) if abs(total_temp_revenue) > 0 else 1) + (
                         (1 / 3) * ((guo_temp_data[country]["Empl"] / total_temp_empl) if abs(total_temp_empl) > 0 else 1)) + (
                          (1 / 3) * ((guo_temp_data[country][
                                         "Assets"] / total_temp_assets) if abs(total_temp_assets) > 0 else 1))) * total_temp_pl)
-        check_sum_after += guo_temp_data[country]["PL_after"]
+        check_sum_after_cctb += guo_temp_data[country]["PL_after"]
 
-    print("= After: {0:>10} -- Before: {1:>10}".format(int(check_sum_after), total_temp_pl))
+    # calculate data factor
+    for country in guo_temp_data:
+        guo_temp_data[country]["E_factor_after"] = (
+                ((1 / 4) * (
+                    (guo_temp_data[country]["Revenue"] / total_temp_revenue) if abs(total_temp_revenue) > 0 else 1) + (
+                         (1 / 4) * (
+                     (guo_temp_data[country]["Empl"] / total_temp_empl) if abs(total_temp_empl) > 0 else 1)) + (
+                         (1 / 4) * ((guo_temp_data[country][
+                                         "Assets"] / total_temp_assets) if abs(
+                     total_temp_assets) > 0 else 1))) * total_temp_pl)
+        check_sum_after_cctb += guo_temp_data[country]["PL_after"]
 
-    if abs((float(check_sum_after) - float(total_temp_pl))) > 2:
+
+    print("= After: {0:>10} -- Before: {1:>10}".format(int(check_sum_after_cctb), total_temp_pl))
+
+    if abs((float(check_sum_after_cctb) - float(total_temp_pl))) > 2:
         print("** We have error here!")
         raise ValueError("Error in SUM!")
 
 
+
     for country in guo_temp_data:
-        results.setdefault(country, dict({"PL before": 0, "CCTB": 0}))
+        results.setdefault(country, dict({"PL before": 0, "CCTB": 0, "Data faktor": 0}))
         results[country]["PL before"] += guo_temp_data[country]["PL_before"]
         results[country]["CCTB"] += guo_temp_data[country]["PL_after"]
 
@@ -55,7 +73,7 @@ def get_results():
 
 csv.register_dialect("excel", delimiter=";")
 
-with open("data3.csv", "r") as file:
+with open("training.csv", "r") as file:
     contents = csv.DictReader(file, dialect="excel")
 
     results = {}  # Country: CZ; P/L before: 12345; PL after: 1258
@@ -69,7 +87,6 @@ with open("data3.csv", "r") as file:
         if row_no == 0:
             GUO = data["GUO - BvD ID number"]
         row_no += 1
-
 
         if GUO == data["GUO - BvD ID number"]:
             set_temp_guo_data()
