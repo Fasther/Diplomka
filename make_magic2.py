@@ -1,17 +1,17 @@
 import csv
 
 open_file = "data4.csv"
-write_file = "result_datafactor.csv"
+write_file = "result_datafactor_data4.csv"
 
 
 def set_temp_guo_data():
     guo_temp_data.setdefault(data["Country ISO code"],
-                             dict({"Revenue": 0, "Empl": 0, "Assets": 0, "PL_before": 0, "PL_after": 0}))
+                             dict({"Revenue": 0, "Empl": 0, "Assets": 0, "PL_before": 0, "PL_after": 0, "E_factor": 0}))
     guo_temp_data[data["Country ISO code"]]["Revenue"] += int(data["Result OP Revenue"])
     guo_temp_data[data["Country ISO code"]]["Empl"] += int(data["Result - EMPl"])
     guo_temp_data[data["Country ISO code"]]["Assets"] += int(data["Result - assets"])
     guo_temp_data[data["Country ISO code"]]["PL_before"] += int(data["Result P/L"])
-    guo_temp_data[data["Country ISO code"]]["E_factor"] = int(data["E Faktor"])
+    guo_temp_data[data["Country ISO code"]]["E_factor"] += float(data["E Faktor"])
 
 
 def get_results():
@@ -32,12 +32,13 @@ def get_results():
         total_temp_e_factor += guo_temp_data[country]["E_factor"]
 
     # calculate CCTB
+    total_temp_pl_not_negative = total_temp_pl if total_temp_pl > 0 else 0  # check for negative profit
 
     for country in guo_temp_data:
         guo_temp_data[country]["PL_after"] = (
                 (((1 / 3) * (guo_temp_data[country]["Revenue"] / total_temp_revenue)) + (
                         (1 / 3) * (guo_temp_data[country]["Empl"] / total_temp_empl)) + (
-                         (1 / 3) * (guo_temp_data[country]["Assets"] / total_temp_assets))) * total_temp_pl)
+                         (1 / 3) * (guo_temp_data[country]["Assets"] / total_temp_assets))) * total_temp_pl_not_negative)
         check_sum_after_cctb += guo_temp_data[country]["PL_after"]
 
     # calculate ratio
@@ -49,15 +50,15 @@ def get_results():
                 (((1 / 4) * (guo_temp_data[country]["Revenue"] / total_temp_revenue)) + (
                         (1 / 4) * (guo_temp_data[country]["Empl"] / total_temp_empl)) + (
                          (1 / 4) * (guo_temp_data[country]["Assets"] / total_temp_assets)) +
-                 (1 / 4) * (guo_temp_data[country]["E_factor"] * ratio / 100)) * total_temp_pl)
+                 (1 / 4) * (guo_temp_data[country]["E_factor"]/total_temp_e_factor)) * total_temp_pl_not_negative)
         check_sum_after_data += guo_temp_data[country]["E_factor_after"]
 
-    print("= After: {0:>10} -- Data: {2:>10} -- Before: {1:>10}".format(int(check_sum_after_cctb), total_temp_pl,
+    print("= Before: {1:>10} -- After: {0:>10} -- Data: {2:>10} -- ".format(int(check_sum_after_cctb), total_temp_pl,
                                                                         int(check_sum_after_data)))
 
-    if abs((float(check_sum_after_cctb) - float(total_temp_pl))) > 2:
-        print("** We have error here!")
-        raise ValueError("Error in SUM!")
+    # if abs((float(check_sum_after_cctb) - float(total_temp_pl))) > 2: # check not needed afterall
+    #     print("** We have error here!")
+    #     raise ValueError("Error in SUM!")
 
     for country in guo_temp_data:
         results.setdefault(country, dict({"PL before": 0, "CCTB": 0, "Data factor": 0}))
