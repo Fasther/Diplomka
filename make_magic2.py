@@ -116,3 +116,4 @@ with open(write_file, "w", newline='') as result_file:
     writer.writerows(write_data)
     print("Completed")
 result_file.close()
+
